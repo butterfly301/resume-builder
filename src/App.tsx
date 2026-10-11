@@ -571,13 +571,9 @@ function ResumeHeader({ resume }: { resume: ResumeDocument }) {
         <div className="resume-education">
           <GraduationCap aria-hidden="true" />
           <span>{[education.graduation, education.major, education.school].filter(Boolean).join(' · ')}</span>
+          {person.birth && <span className="resume-edu-meta"><CalendarDays aria-hidden="true" />{person.birth}</span>}
+          {person.city && <span className="resume-edu-meta"><MapPin aria-hidden="true" />{person.city}</span>}
         </div>
-        {(person.birth || person.city) && (
-          <div className="resume-person-meta">
-            {person.birth && <span><CalendarDays aria-hidden="true" />{person.birth}</span>}
-            {person.city && <span><MapPin aria-hidden="true" />{person.city}</span>}
-          </div>
-        )}
       </div>
       <div className="resume-contact">
         {person.phone && <a href={`tel:${person.phone}`}><Phone aria-hidden="true" />{person.phone}</a>}

@@ -1093,8 +1093,7 @@ input::placeholder {
 }
 
 .resume-education,
-.resume-person-meta,
-.resume-person-meta > span {
+.resume-edu-meta {
   display: flex;
   align-items: center;
 }
@@ -1105,19 +1104,13 @@ input::placeholder {
   font-size: 10.5pt;
 }
 
-.resume-person-meta {
-  flex-wrap: wrap;
-  gap: 1.5mm 5mm;
-  margin-top: 1.4mm;
-  font-size: 10.5pt;
-}
-
-.resume-person-meta > span {
+.resume-edu-meta {
   gap: 1.6mm;
+  margin-left: 2.5mm;
 }
 
 .resume-education svg,
-.resume-person-meta svg,
+.resume-edu-meta svg,
 .resume-contact svg {
   flex: none;
   width: 3.5mm;
@@ -1700,10 +1693,10 @@ input::placeholder {
 .resume-name-line h1 {
   color: color-mix(in srgb, var(--resume-accent, #1e4a3a) 85%, black);
   font-family: "得意黑", "Microsoft YaHei", sans-serif;
-  font-size: 26pt;
+  font-size: 29pt;
   font-weight: 800;
   line-height: 0.98;
-  letter-spacing: 0.8pt;
+  letter-spacing: 1pt;
 }
 
 .resume-name-line span {
@@ -1722,15 +1715,14 @@ input::placeholder {
   font-size: 10.25pt;
 }
 
-.resume-person-meta {
-  gap: 1.5mm 6mm;
-  margin-top: 4.5mm;
+.resume-edu-meta {
+  gap: 1.8mm;
+  margin-left: 3mm;
   color: #65716b;
-  font-size: 9.5pt;
 }
 
 .resume-education svg,
-.resume-person-meta svg,
+.resume-edu-meta svg,
 .resume-contact svg {
   width: 3.25mm;
   height: 3.25mm;
