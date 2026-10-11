@@ -2117,6 +2117,11 @@ input::placeholder {
   padding-bottom: max(calc(3.2mm + var(--resume-item-gap, 0mm)), 0.6mm);
 }
 
+/* 末位经历条目不再承载分割线收尾，板块标题上方间距交给 section-gap 统一控制 */
+.resume-section .resume-block-item.experience-preview:last-child {
+  padding-bottom: 0;
+}
+
 /* 排版设置弹层 */
 .preview-meta {
   position: relative;
