@@ -292,7 +292,8 @@ button:disabled {
 }
 
 .workspace {
-  min-height: calc(100vh - 56px);
+  height: calc(100vh - 56px);
+  overflow: hidden;
   display: grid;
   grid-template-columns: 224px minmax(460px, 0.92fr) minmax(500px, 1.08fr);
   align-items: stretch;
@@ -305,8 +306,6 @@ button:disabled {
 }
 
 .resume-sidebar {
-  position: sticky;
-  top: 56px;
   height: calc(100vh - 56px);
   border-right: 1px solid var(--border-strong);
   background: #f7f8f7;
@@ -452,8 +451,6 @@ button:disabled {
 }
 
 .editor-panel {
-  position: sticky;
-  top: 56px;
   height: calc(100vh - 56px);
   border-right: 1px solid var(--border-strong);
   background: var(--surface-muted);
@@ -932,8 +929,6 @@ input::placeholder {
 }
 
 .preview-panel {
-  position: sticky;
-  top: 56px;
   height: calc(100vh - 56px);
   background: #dfe3e0;
 }
@@ -949,9 +944,16 @@ input::placeholder {
   font-weight: 700;
 }
 
+.preview-panel > div {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .preview-viewport {
   position: relative;
-  height: calc(100% - 52px);
+  flex: 1;
+  min-height: 0;
   padding: 48px 16px 36px;
   overflow: auto;
   scrollbar-gutter: stable;
@@ -1000,7 +1002,7 @@ input::placeholder {
   flex: none;
   width: 210mm;
   min-height: 297mm;
-  padding: 10.5mm;
+  padding: var(--resume-margin-top, 14mm) var(--resume-margin-right, 14mm) var(--resume-margin-bottom, 14mm) var(--resume-margin-left, 14mm);
   background: #fff;
   color: #050505;
   box-shadow: var(--shadow-paper);
@@ -1038,7 +1040,7 @@ input::placeholder {
 }
 
 .resume-content {
-  width: 189mm;
+  width: calc(210mm - var(--resume-margin-left, 14mm) - var(--resume-margin-right, 14mm));
   color: #050505;
   font-family: SimHei, "Microsoft YaHei", sans-serif;
   font-size: var(--resume-font-size, 10.75pt);
@@ -1058,6 +1060,7 @@ input::placeholder {
   grid-template-columns: minmax(0, 1fr) 53mm 24mm;
   gap: 4.5mm;
   padding: 0 0 4.5mm;
+  line-height: 1.35;
 }
 
 .resume-identity {
@@ -1200,7 +1203,7 @@ input::placeholder {
 
 .skill-preview.summary {
   display: block;
-  padding: 0.9mm 0 1.2mm;
+  padding: calc(0.9mm + var(--resume-summary-gap, 0mm)) 0 calc(1.2mm + var(--resume-summary-gap, 0mm));
   font-size: 9.6pt;
 }
 
@@ -1655,18 +1658,18 @@ input::placeholder {
 }
 
 .resume-page {
-  padding: 14mm;
+  padding: var(--resume-margin-top, 14mm) var(--resume-margin-right, 14mm) var(--resume-margin-bottom, 14mm) var(--resume-margin-left, 14mm);
   background: #fffdf9;
   color: #202823;
   box-shadow: 0 24px 60px rgb(29 39 33 / 16%), 0 3px 12px rgb(29 39 33 / 10%);
 }
 
 .resume-content {
-  width: 182mm;
+  width: calc(210mm - var(--resume-margin-left, 14mm) - var(--resume-margin-right, 14mm));
   color: #343b37;
   font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
-  font-size: 10.25pt;
-  line-height: 1.48;
+  font-size: var(--resume-font-size, 10.25pt);
+  line-height: var(--resume-line-height, 1.48);
   overflow-wrap: break-word;
 }
 
@@ -1720,7 +1723,7 @@ input::placeholder {
 
 .resume-person-meta {
   gap: 1.5mm 6mm;
-  margin-top: 2mm;
+  margin-top: 4.5mm;
   color: #65716b;
   font-size: 9.5pt;
 }
@@ -1783,7 +1786,7 @@ input::placeholder {
   background: transparent;
   color: #1e4a3a;
   font-family: "得意黑", "Microsoft YaHei", sans-serif;
-  font-size: 13.5pt;
+  font-size: var(--resume-section-font-size, 15pt);
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: 0.8pt;
@@ -1801,13 +1804,13 @@ input::placeholder {
 .skill-preview {
   grid-template-columns: 4mm minmax(0, 1fr);
   padding: 0.4mm 0;
-  line-height: 1.35;
+  line-height: var(--resume-line-height, 1.35);
   color: #39423d;
 }
 
 .skill-preview.summary {
-  margin: 0.4mm 0 1.4mm;
-  padding: 0.9mm 0 1.2mm;
+  margin: calc(0.4mm + var(--resume-summary-gap, 0mm)) 0 calc(1.4mm + var(--resume-summary-gap, 0mm));
+  padding: calc(0.9mm + var(--resume-summary-gap, 0mm)) 0 calc(1.2mm + var(--resume-summary-gap, 0mm));
   color: #405149;
   font-size: 9.35pt;
   line-height: 1.45;
@@ -1844,8 +1847,8 @@ input::placeholder {
 .experience-preview-main h3 {
   color: #21372e;
   font-family: "得意黑", "Microsoft YaHei", sans-serif;
-  font-size: 13.5pt;
-  font-weight: 800;
+  font-size: var(--resume-item-font-size, 11.5pt);
+  font-weight: 750;
   line-height: 1.2;
   letter-spacing: 0.15pt;
 }
@@ -1905,11 +1908,11 @@ input::placeholder {
 
 .measurement-shell {
   width: 210mm;
-  padding: 14mm;
+  padding: var(--resume-margin-top, 14mm) var(--resume-margin-right, 14mm) var(--resume-margin-bottom, 14mm) var(--resume-margin-left, 14mm);
 }
 
 .measurement-content {
-  width: 182mm;
+  width: auto;
 }
 
 .overflow-marker {
@@ -1943,12 +1946,56 @@ input::placeholder {
 }
 
 .gap-control input {
-  width: 52px;
-  padding: 2px 6px;
+  width: 46px;
+  padding: 2px 5px;
   border: 1px solid #c7d4ce;
-  border-radius: 5px;
+  border-radius: 5px 0 0 5px;
+  border-right: none;
   font-size: 11px;
   text-align: right;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.gap-control input::-webkit-outer-spin-button,
+.gap-control input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.number-stepper {
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.stepper-buttons {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #c7d4ce;
+  border-left: none;
+  border-radius: 0 5px 5px 0;
+  overflow: hidden;
+  background: #fff;
+}
+
+.stepper-buttons button {
+  flex: 1;
+  padding: 0 4px;
+  border: none;
+  background: transparent;
+  color: #5c665f;
+  font-size: 7px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.stepper-buttons button:hover {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.stepper-buttons button:active {
+  background: var(--green-line);
 }
 
 .gap-control input:focus {
@@ -2045,4 +2092,74 @@ input::placeholder {
 
 .sortable-card.is-focused {
   animation: editor-focus-flash 2s ease-out;
+}
+
+/* 条目间距同时作用于经历条目内的 bullet 之间，点间距在其基础上额外叠加 */
+.experience-preview li {
+  margin-bottom: calc(var(--resume-item-gap, 0mm) + var(--resume-bullet-gap, 0mm));
+}
+
+.experience-preview li:last-child {
+  margin-bottom: 0;
+}
+
+/* 板块标题与第一个条目的间距 */
+.resume-section-title {
+  margin-bottom: var(--resume-title-gap, 0mm);
+}
+
+/* 经历条目的分割线随条目间距移动：间距作用于分割线内侧的 padding，
+   而不是外侧的 margin（margin 会让分割线悬在原地不动） */
+.resume-block-item.experience-preview {
+  margin-bottom: 0;
+  padding-bottom: max(calc(3.2mm + var(--resume-item-gap, 0mm)), 0.6mm);
+}
+
+/* 排版设置弹层 */
+.preview-meta {
+  position: relative;
+}
+
+.layout-toggle {
+  margin-left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.layout-toggle.is-open {
+  background: var(--green-soft);
+  border-color: var(--green-line);
+  color: var(--green);
+}
+
+.layout-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 10px 18px;
+  justify-content: start;
+  padding: 14px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-paper);
+}
+
+.layout-panel .gap-control {
+  margin-left: 0;
+}
+
+/* 排版调整字段区 */
+.layout-field-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 16px;
+}
+
+.layout-field-grid .gap-control {
+  margin-left: 0;
 }

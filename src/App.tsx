@@ -32,7 +32,6 @@ import {
   Bold,
   CalendarDays,
   Camera,
-  Check,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -54,6 +53,7 @@ import {
   Redo2,
   RotateCcw,
   Save,
+  SlidersHorizontal,
   Trash2,
   Undo2,
   UserRound,
@@ -147,6 +147,41 @@ function IconButton({
     <button className={`icon-button ${className}`} type="button" aria-label={label} title={label} {...props}>
       {children}
     </button>
+  )
+}
+
+function NumberField({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onChange,
+}: {
+  label: string
+  value: number
+  min: number
+  max: number
+  step: number
+  onChange: (value: number) => void
+}) {
+  const clamp = (next: number) => Math.max(min, Math.min(max, next))
+  const stepped = (delta: number) => onChange(clamp(Number((value + delta).toFixed(2))))
+  return (
+    <span className="number-stepper">
+      <input
+        type="number"
+        value={value}
+        min={min}
+        max={max}
+        step={step}
+        onChange={(event) => onChange(clamp(Number(event.target.value) || min))}
+      />
+      <span className="stepper-buttons">
+        <button type="button" tabIndex={-1} aria-label={`增加${label}`} onClick={() => stepped(step)}>▲</button>
+        <button type="button" tabIndex={-1} aria-label={`减少${label}`} onClick={() => stepped(-step)}>▼</button>
+      </span>
+    </span>
   )
 }
 
@@ -608,14 +643,23 @@ function resumeLayoutStyle(resume: ResumeDocument): CSSProperties {
   return {
     '--section-gap': `${resume.sectionGap ?? 0}mm`,
     '--resume-item-gap': `${layout.itemGap}mm`,
+    '--resume-summary-gap': `${layout.summaryGap}mm`,
+    '--resume-title-gap': `${layout.titleGap}mm`,
     '--resume-line-height': `${layout.lineHeight}`,
     '--resume-font-size': `${layout.fontSize}pt`,
+    '--resume-section-font-size': `${layout.sectionFontSize}pt`,
+    '--resume-item-font-size': `${layout.itemFontSize}pt`,
+    '--resume-bullet-gap': `${layout.bulletGap}mm`,
+    '--resume-margin-top': `${layout.marginTop}mm`,
+    '--resume-margin-bottom': `${layout.marginBottom}mm`,
+    '--resume-margin-left': `${layout.marginLeft}mm`,
+    '--resume-margin-right': `${layout.marginRight}mm`,
   } as CSSProperties
 }
 
 function MeasurementLayer({ resume, measureRef }: { resume: ResumeDocument; measureRef: React.RefObject<HTMLDivElement | null> }) {
   return (
-    <div className="measurement-shell" aria-hidden="true">
+    <div className="measurement-shell" aria-hidden="true" style={resumeLayoutStyle(resume)}>
       <div className="resume-content measurement-content" ref={measureRef} style={resumeLayoutStyle(resume)}>
         <ResumeHeader resume={resume} />
         {resume.sections.map((section) => (
@@ -639,7 +683,10 @@ function resumeBodyKey(resume: ResumeDocument) {
 function buildPages(resume: ResumeDocument, root: HTMLDivElement): ResumePageData[] {
   const width = root.getBoundingClientRect().width
   if (!width) return [{ sections: [], overflowLabels: [] }]
-  const pageCapacity = (width / 182) * 269
+  const layout = resume.layout
+  const contentWidthMm = Math.max(120, 210 - layout.marginLeft - layout.marginRight)
+  const contentHeightMm = Math.max(150, 297 - layout.marginTop - layout.marginBottom)
+  const pageCapacity = (width / contentWidthMm) * contentHeightMm
   const headerHeight = root.querySelector<HTMLElement>('[data-measure-header]')?.offsetHeight ?? 0
   const titleHeights = new Map<string, number>()
   const itemHeights = new Map<string, number>()
@@ -727,7 +774,12 @@ function usePagination(resume: ResumeDocument) {
 
 function ResumePage({ resume, data, pageNumber }: { resume: ResumeDocument; data: ResumePageData; pageNumber: number }) {
   return (
-    <article className={`resume-page${data.overflowLabels.length ? ' has-overflow resume-overflow' : ''}`} data-overflow={data.overflowLabels.length ? 'true' : 'false'} aria-label={`简历第 ${pageNumber} 页`}>
+    <article
+      className={`resume-page${data.overflowLabels.length ? ' has-overflow resume-overflow' : ''}`}
+      style={resumeLayoutStyle(resume)}
+      data-overflow={data.overflowLabels.length ? 'true' : 'false'}
+      aria-label={`简历第 ${pageNumber} 页`}
+    >
       {data.overflowLabels.length > 0 && (
         <div className="overflow-marker" role="alert">
           <AlertCircle size={14} /> 页面溢出：{data.overflowLabels.join('、')}
@@ -753,17 +805,180 @@ function ResumePage({ resume, data, pageNumber }: { resume: ResumeDocument; data
   )
 }
 
+function LayoutFields({
+  resume,
+  onLayoutChange,
+  onSectionGapChange,
+}: {
+  resume: ResumeDocument
+  onLayoutChange: (layout: ResumeLayout) => void
+  onSectionGapChange: (gap: number) => void
+}) {
+  const sectionGap = resume.sectionGap ?? 0
+  return (
+    <section className="editor-card layout-card">
+      <div className="card-heading"><SlidersHorizontal size={16} /><h2>排版调整</h2></div>
+      <div className="layout-field-grid">
+        <label className="gap-control" title="调整板块标题上方的额外间距">
+          板块间距
+          <NumberField label="板块间距" value={sectionGap} min={-3} max={12} step={0.5} onChange={onSectionGapChange} />
+          mm
+        </label>
+        <label className="gap-control" title="调整板块内条目之间的距离，负值收紧">
+          条目间距
+          <NumberField
+            label="条目间距"
+            value={resume.layout.itemGap}
+            min={-3}
+            max={6}
+            step={0.25}
+            onChange={(itemGap) => onLayoutChange({ ...resume.layout, itemGap })}
+          />
+          mm
+        </label>
+        <label className="gap-control" title="调整技能区摘要行（段落式条目）上方与下方的额外间距，负值收紧">
+          摘要行间距
+          <NumberField
+            label="摘要行间距"
+            value={resume.layout.summaryGap}
+            min={-3}
+            max={6}
+            step={0.25}
+            onChange={(summaryGap) => onLayoutChange({ ...resume.layout, summaryGap })}
+          />
+          mm
+        </label>
+        <label className="gap-control" title="调整板块标题与第一个条目之间的距离">
+          标题间距
+          <NumberField
+            label="标题间距"
+            value={resume.layout.titleGap}
+            min={-3}
+            max={8}
+            step={0.25}
+            onChange={(titleGap) => onLayoutChange({ ...resume.layout, titleGap })}
+          />
+          mm
+        </label>
+        <label className="gap-control" title="调整除个人信息外正文的行间距">
+          行间距
+          <NumberField
+            label="行间距"
+            value={resume.layout.lineHeight}
+            min={1.1}
+            max={1.9}
+            step={0.05}
+            onChange={(lineHeight) => onLayoutChange({ ...resume.layout, lineHeight })}
+          />
+        </label>
+        <label className="gap-control" title="调整正文字号">
+          正文字号
+          <NumberField
+            label="正文字号"
+            value={resume.layout.fontSize}
+            min={9}
+            max={12.5}
+            step={0.25}
+            onChange={(fontSize) => onLayoutChange({ ...resume.layout, fontSize })}
+          />
+          pt
+        </label>
+        <label className="gap-control" title="调整板块标题（如「实习经历」）字号">
+          板块标题字号
+          <NumberField
+            label="板块标题字号"
+            value={resume.layout.sectionFontSize}
+            min={9}
+            max={18}
+            step={0.25}
+            onChange={(sectionFontSize) => onLayoutChange({ ...resume.layout, sectionFontSize })}
+          />
+          pt
+        </label>
+        <label className="gap-control" title="调整条目标题（公司/项目名）字号">
+          条目标题字号
+          <NumberField
+            label="条目标题字号"
+            value={resume.layout.itemFontSize}
+            min={9}
+            max={14}
+            step={0.25}
+            onChange={(itemFontSize) => onLayoutChange({ ...resume.layout, itemFontSize })}
+          />
+          pt
+        </label>
+        <label className="gap-control" title="调整经历条目内 bullet 点之间的额外间距，叠加在条目间距之上">
+          点间距
+          <NumberField
+            label="点间距"
+            value={resume.layout.bulletGap}
+            min={-3}
+            max={6}
+            step={0.25}
+            onChange={(bulletGap) => onLayoutChange({ ...resume.layout, bulletGap })}
+          />
+          mm
+        </label>
+        <label className="gap-control" title="页面上边距">
+          上边距
+          <NumberField
+            label="上边距"
+            value={resume.layout.marginTop}
+            min={0}
+            max={30}
+            step={0.5}
+            onChange={(marginTop) => onLayoutChange({ ...resume.layout, marginTop })}
+          />
+          mm
+        </label>
+        <label className="gap-control" title="页面下边距">
+          下边距
+          <NumberField
+            label="下边距"
+            value={resume.layout.marginBottom}
+            min={0}
+            max={30}
+            step={0.5}
+            onChange={(marginBottom) => onLayoutChange({ ...resume.layout, marginBottom })}
+          />
+          mm
+        </label>
+        <label className="gap-control" title="页面左边距">
+          左边距
+          <NumberField
+            label="左边距"
+            value={resume.layout.marginLeft}
+            min={0}
+            max={30}
+            step={0.5}
+            onChange={(marginLeft) => onLayoutChange({ ...resume.layout, marginLeft })}
+          />
+          mm
+        </label>
+        <label className="gap-control" title="页面右边距">
+          右边距
+          <NumberField
+            label="右边距"
+            value={resume.layout.marginRight}
+            min={0}
+            max={30}
+            step={0.5}
+            onChange={(marginRight) => onLayoutChange({ ...resume.layout, marginRight })}
+          />
+          mm
+        </label>
+      </div>
+    </section>
+  )
+}
+
 function PreviewCanvas({
   resume,
   onOverflowChange,
-  onSectionGapChange,
-  onLayoutChange,
   onPreviewFocus,
 }: {
   resume: ResumeDocument
   onOverflowChange: (labels: string[]) => void
-  onSectionGapChange: (gap: number) => void
-  onLayoutChange: (layout: ResumeLayout) => void
   onPreviewFocus?: (focus: PreviewFocus) => void
 }) {
   const { pages, measureRef, ready } = usePagination(resume)
@@ -798,57 +1013,6 @@ function PreviewCanvas({
     <div data-resume-id={resume.id} data-pagination-ready={ready ? 'true' : 'false'} data-overflow={overflowLabels.length ? 'true' : 'false'}>
       <MeasurementLayer resume={resume} measureRef={measureRef} />
       <div className="preview-viewport" ref={viewportRef}>
-        <div className="preview-meta">
-          <span>{pages.length} 页 · A4</span>
-          {overflowLabels.length ? <strong><AlertCircle size={14} /> {overflowLabels.length} 项溢出</strong> : <span className="fit-status"><Check size={14} /> 分页正常</span>}
-          <label className="gap-control" title="调整板块标题上方的额外间距">
-            板块间距
-            <input
-              type="number"
-              min={-3}
-              max={12}
-              step={0.5}
-              value={sectionGap}
-              onChange={(event) => onSectionGapChange(Math.max(-3, Math.min(12, Number(event.target.value) || 0)))}
-            />
-            mm
-          </label>
-          <label className="gap-control" title="调整板块内条目之间的距离，负值收紧">
-            条目间距
-            <input
-              type="number"
-              min={-3}
-              max={6}
-              step={0.25}
-              value={resume.layout.itemGap}
-              onChange={(event) => onLayoutChange({ ...resume.layout, itemGap: Math.max(-3, Math.min(6, Number(event.target.value) || 0)) })}
-            />
-            mm
-          </label>
-          <label className="gap-control" title="调整正文行间距">
-            行间距
-            <input
-              type="number"
-              min={1.1}
-              max={1.9}
-              step={0.05}
-              value={resume.layout.lineHeight}
-              onChange={(event) => onLayoutChange({ ...resume.layout, lineHeight: Math.max(1.1, Math.min(1.9, Number(event.target.value) || 1.35)) })}
-            />
-          </label>
-          <label className="gap-control" title="调整正文字号">
-            字号
-            <input
-              type="number"
-              min={9}
-              max={12.5}
-              step={0.25}
-              value={resume.layout.fontSize}
-              onChange={(event) => onLayoutChange({ ...resume.layout, fontSize: Math.max(9, Math.min(12.5, Number(event.target.value) || 10.75)) })}
-            />
-            pt
-          </label>
-        </div>
         <div
           className="preview-scale-stage"
           style={{
@@ -1120,7 +1284,20 @@ function App() {
           education: { graduation: '', major: '', school: '' },
           sections: [],
           sectionGap: 0,
-          layout: { itemGap: 0, lineHeight: 1.35, fontSize: 10.75 },
+          layout: {
+            itemGap: 0,
+            bulletGap: 0,
+            summaryGap: 0,
+            titleGap: 0,
+            lineHeight: 1.35,
+            fontSize: 10.75,
+            sectionFontSize: 15,
+            itemFontSize: 11.5,
+            marginTop: 14,
+            marginBottom: 14,
+            marginLeft: 14,
+            marginRight: 14,
+          },
           snapshots: [],
         }
     setBusyAction(source ? `copy-${source.id}` : 'create')
@@ -1476,19 +1653,19 @@ function App() {
                       </div>
                     ) : <p className="muted-copy">还没有快照。快照保存当前整份简历内容，可随时恢复。</p>}
                   </section>
+
+                  <LayoutFields
+                    resume={current}
+                    onLayoutChange={(layout) => updateCurrent((doc) => ({ ...doc, layout }))}
+                    onSectionGapChange={(gap) => updateCurrent((doc) => ({ ...doc, sectionGap: gap }))}
+                  />
                 </div>
               </section>
 
               <section className="preview-panel" aria-label="A4 实时预览">
-                <div className="preview-panel-heading">
-                  <div><span>A4 实时预览</span><small>210 × 297 mm</small></div>
-                  {overflowLabels.length > 0 && <span className="preview-warning"><AlertCircle size={14} /> 请修正溢出条目</span>}
-                </div>
                 <PreviewCanvas
                   resume={current}
                   onOverflowChange={setOverflowLabels}
-                  onSectionGapChange={(gap) => updateCurrent((doc) => ({ ...doc, sectionGap: gap }))}
-                  onLayoutChange={(layout) => updateCurrent((doc) => ({ ...doc, layout }))}
                   onPreviewFocus={setPreviewFocus}
                 />
               </section>
