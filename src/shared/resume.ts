@@ -35,6 +35,16 @@ export const sectionSchema = z.discriminatedUnion('kind', [
   }),
 ])
 
+export const resumeLayoutSchema = z.object({
+  itemGap: z.number().min(-3).max(6).default(0),
+  lineHeight: z.number().min(1.1).max(1.9).default(1.35),
+  fontSize: z.number().min(9).max(12.5).default(10.75),
+})
+
+export type ResumeLayout = z.infer<typeof resumeLayoutSchema>
+
+export const resumeLayoutDefaults: ResumeLayout = { itemGap: 0, lineHeight: 1.35, fontSize: 10.75 }
+
 export const resumeBaseSchema = z.object({
   id: idSchema,
   title: z.string().min(1).max(200),
@@ -57,6 +67,7 @@ export const resumeBaseSchema = z.object({
   }),
   sections: z.array(sectionSchema).max(30),
   sectionGap: z.number().min(-3).max(12).default(0),
+  layout: resumeLayoutSchema.default(resumeLayoutDefaults),
 })
 
 export const snapshotSchema = z.object({

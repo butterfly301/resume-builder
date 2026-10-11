@@ -1041,8 +1041,8 @@ input::placeholder {
   width: 189mm;
   color: #050505;
   font-family: SimHei, "Microsoft YaHei", sans-serif;
-  font-size: 10.75pt;
-  line-height: 1.35;
+  font-size: var(--resume-font-size, 10.75pt);
+  line-height: var(--resume-line-height, 1.35);
   overflow-wrap: anywhere;
 }
 
@@ -1183,6 +1183,11 @@ input::placeholder {
 
 .resume-block-item {
   break-inside: avoid;
+  margin-bottom: var(--resume-item-gap, 0mm);
+}
+
+.resume-section .resume-block-item:last-child {
+  margin-bottom: 0;
 }
 
 .skill-preview {
@@ -1190,7 +1195,7 @@ input::placeholder {
   display: grid;
   grid-template-columns: 3.4mm minmax(0, 1fr);
   padding: 0.4mm 0;
-  line-height: 1.35;
+  line-height: var(--resume-line-height, 1.35);
 }
 
 .skill-preview.summary {
@@ -2006,4 +2011,38 @@ input::placeholder {
     page-break-after: auto;
     break-after: auto;
   }
+}
+
+/* 点击预览定位编辑块 */
+.preview-pages [data-preview-item] {
+  cursor: pointer;
+}
+
+.preview-pages [data-preview-item]:hover {
+  outline: 1px dashed var(--green-line);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+@keyframes editor-focus-flash {
+  0% {
+    box-shadow: 0 0 0 3px var(--focus), 0 0 0 8px rgb(35 137 90 / 22%);
+    background-color: var(--green-soft);
+  }
+  70% {
+    box-shadow: 0 0 0 3px var(--focus), 0 0 0 8px rgb(35 137 90 / 12%);
+    background-color: var(--green-soft);
+  }
+  100% {
+    box-shadow: var(--shadow-small);
+    background-color: transparent;
+  }
+}
+
+.section-editor-card.is-focused {
+  animation: editor-focus-flash 2s ease-out;
+}
+
+.sortable-card.is-focused {
+  animation: editor-focus-flash 2s ease-out;
 }

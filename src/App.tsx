@@ -65,6 +65,7 @@ import {
   type ExperienceItem,
   type ResumeBase,
   type ResumeDocument,
+  type ResumeLayout,
   type ResumeSection,
   type SkillItem,
 } from './shared/resume'
@@ -74,6 +75,7 @@ type SaveState = 'saved' | 'unsaved' | 'saving' | 'error'
 type Toast = { id: string; tone: 'success' | 'error' | 'neutral'; message: string }
 type PageSection = { sectionId: string; showTitle: boolean; itemIds: string[] }
 type ResumePageData = { sections: PageSection[]; overflowLabels: string[] }
+type PreviewFocus = { sectionId: string; itemId?: string; nonce: number }
 
 const createId = (prefix: string) =>
   `${prefix}-${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`}`
@@ -148,11 +150,26 @@ function IconButton({
   )
 }
 
-function SortableCard({ id, className = '', children }: { id: string; className?: string; children: ReactNode }) {
+function SortableCard({
+  id,
+  className = '',
+  children,
+  dataEditorItem,
+}: {
+  id: string
+  className?: string
+  children: ReactNode
+  dataEditorItem?: string
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
   const style: CSSProperties = { transform: CSS.Transform.toString(transform), transition }
   return (
-    <div ref={setNodeRef} style={style} className={`sortable-card ${className}${isDragging ? ' is-dragging' : ''}`}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`sortable-card ${className}${isDragging ? ' is-dragging' : ''}`}
+      data-editor-item={dataEditorItem}
+    >
       <button className="drag-handle" type="button" aria-label="拖拽排序" {...attributes} {...listeners}>
         <GripVertical size={16} />
       </button>
@@ -366,14 +383,34 @@ function SectionEditor({
   onChange,
   onDuplicate,
   onDelete,
+  focus,
 }: {
   section: ResumeSection
   onChange: (section: ResumeSection) => void
   onDuplicate: () => void
   onDelete: () => void
+  focus?: PreviewFocus | null
 }) {
   const [collapsed, setCollapsed] = useState(false)
   const sensors = useDragSensors()
+  const cardRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    if (!focus || focus.sectionId !== section.id) return
+    if (collapsed) setCollapsed(false)
+    const timer = window.setTimeout(() => {
+      const root = cardRef.current
+      if (!root) return
+      const target = (focus.itemId ? root.querySelector<HTMLElement>(`[data-editor-item="${focus.itemId.replace(/"/g, '\\"')}"]`) : null) ?? root
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      target.classList.remove('is-focused')
+      void target.offsetWidth
+      target.classList.add('is-focused')
+      window.setTimeout(() => target.classList.remove('is-focused'), 2000)
+    }, collapsed ? 120 : 30)
+    return () => window.clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus?.nonce])
 
   const reorderItems = ({ active, over }: DragEndEvent) => {
     if (!over || active.id === over.id) return
@@ -403,7 +440,7 @@ function SectionEditor({
   }
 
   return (
-    <article className="section-editor-card">
+    <article className="section-editor-card" ref={cardRef} data-editor-section={section.id}>
       <header className="section-editor-header">
         <button type="button" className="collapse-button" onClick={() => setCollapsed((value) => !value)} aria-expanded={!collapsed}>
           {collapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
@@ -426,7 +463,7 @@ function SectionEditor({
                 <div className="item-editor-list">
                   {section.kind === 'skills'
                     ? section.items.map((item) => (
-                        <SortableCard key={item.id} id={item.id} className="skill-editor">
+                        <SortableCard key={item.id} id={item.id} className="skill-editor" dataEditorItem={item.id}>
                           <div className="skill-controls">
                             <select
                               aria-label="技能条目样式"
@@ -461,7 +498,7 @@ function SectionEditor({
                         </SortableCard>
                       ))
                     : section.items.map((item) => (
-                        <SortableCard key={item.id} id={item.id} className="experience-sortable">
+                        <SortableCard key={item.id} id={item.id} className="experience-sortable" dataEditorItem={item.id}>
                           <ExperienceEditor
                             sectionId={section.id}
                             item={item}
@@ -520,26 +557,36 @@ function ResumeHeader({ resume }: { resume: ResumeDocument }) {
 
 function ResumeSectionTitle({ title, sectionId }: { title: string; sectionId?: string }) {
   return (
-    <div className="resume-section-title measure-block" data-measure-section={sectionId}>
+    <div className="resume-section-title measure-block" data-measure-section={sectionId} data-preview-section={sectionId}>
       <h2>{title}</h2>
       <span />
     </div>
   )
 }
 
-function SkillPreviewItem({ item, measure = false }: { item: SkillItem; measure?: boolean }) {
+function SkillPreviewItem({ item, sectionId, measure = false }: { item: SkillItem; sectionId?: string; measure?: boolean }) {
   return (
-    <div className={`resume-block-item skill-preview ${item.variant}`} data-measure-item={measure ? item.id : undefined}>
+    <div
+      className={`resume-block-item skill-preview ${item.variant}`}
+      data-measure-item={measure ? item.id : undefined}
+      data-preview-section={sectionId}
+      data-preview-item={item.id}
+    >
       {item.variant === 'bullet' && <i aria-hidden="true" />}
       <div dangerouslySetInnerHTML={{ __html: cleanHtml(item.html) }} />
     </div>
   )
 }
 
-function ExperiencePreviewItem({ item, measure = false }: { item: ExperienceItem; measure?: boolean }) {
+function ExperiencePreviewItem({ item, sectionId, measure = false }: { item: ExperienceItem; sectionId?: string; measure?: boolean }) {
   const separator = item.separator === 'pipe' ? ' | ' : ' / '
   return (
-    <article className="resume-block-item experience-preview" data-measure-item={measure ? item.id : undefined}>
+    <article
+      className="resume-block-item experience-preview"
+      data-measure-item={measure ? item.id : undefined}
+      data-preview-section={sectionId}
+      data-preview-item={item.id}
+    >
       <div className={`experience-preview-heading${item.link ? ' has-link' : ''}`}>
         <div className="experience-preview-main">
           <h3>{item.title}</h3>
@@ -556,17 +603,27 @@ function ExperiencePreviewItem({ item, measure = false }: { item: ExperienceItem
   )
 }
 
-function MeasurementLayer({ resume, measureRef, gap }: { resume: ResumeDocument; measureRef: React.RefObject<HTMLDivElement | null>; gap: number }) {
+function resumeLayoutStyle(resume: ResumeDocument): CSSProperties {
+  const layout = resume.layout
+  return {
+    '--section-gap': `${resume.sectionGap ?? 0}mm`,
+    '--resume-item-gap': `${layout.itemGap}mm`,
+    '--resume-line-height': `${layout.lineHeight}`,
+    '--resume-font-size': `${layout.fontSize}pt`,
+  } as CSSProperties
+}
+
+function MeasurementLayer({ resume, measureRef }: { resume: ResumeDocument; measureRef: React.RefObject<HTMLDivElement | null> }) {
   return (
     <div className="measurement-shell" aria-hidden="true">
-      <div className="resume-content measurement-content" ref={measureRef} style={{ '--section-gap': `${gap}mm` } as CSSProperties}>
+      <div className="resume-content measurement-content" ref={measureRef} style={resumeLayoutStyle(resume)}>
         <ResumeHeader resume={resume} />
         {resume.sections.map((section) => (
           <div className={`resume-section resume-section-${section.kind}`} key={section.id}>
             <ResumeSectionTitle title={section.title} sectionId={section.id} />
             {section.kind === 'skills'
-              ? section.items.map((item) => <SkillPreviewItem key={item.id} item={item} measure />)
-              : section.items.map((item) => <ExperiencePreviewItem key={item.id} item={item} measure />)}
+              ? section.items.map((item) => <SkillPreviewItem key={item.id} item={item} sectionId={section.id} measure />)
+              : section.items.map((item) => <ExperiencePreviewItem key={item.id} item={item} sectionId={section.id} measure />)}
           </div>
         ))}
       </div>
@@ -676,17 +733,17 @@ function ResumePage({ resume, data, pageNumber }: { resume: ResumeDocument; data
           <AlertCircle size={14} /> 页面溢出：{data.overflowLabels.join('、')}
         </div>
       )}
-      <div className="resume-content">
+      <div className="resume-content" style={resumeLayoutStyle(resume)}>
         {pageNumber === 1 && <ResumeHeader resume={resume} />}
         {data.sections.map((fragment, index) => {
           const section = resume.sections.find((entry) => entry.id === fragment.sectionId)
           if (!section) return null
           return (
             <section className={`resume-section resume-section-${section.kind}`} key={`${fragment.sectionId}-${index}`}>
-              {fragment.showTitle && <ResumeSectionTitle title={section.title} />}
+              {fragment.showTitle && <ResumeSectionTitle title={section.title} sectionId={section.id} />}
               {section.kind === 'skills'
-                ? section.items.filter((item) => fragment.itemIds.includes(item.id)).map((item) => <SkillPreviewItem key={item.id} item={item} />)
-                : section.items.filter((item) => fragment.itemIds.includes(item.id)).map((item) => <ExperiencePreviewItem key={item.id} item={item} />)}
+                ? section.items.filter((item) => fragment.itemIds.includes(item.id)).map((item) => <SkillPreviewItem key={item.id} item={item} sectionId={section.id} />)
+                : section.items.filter((item) => fragment.itemIds.includes(item.id)).map((item) => <ExperiencePreviewItem key={item.id} item={item} sectionId={section.id} />)}
             </section>
           )
         })}
@@ -696,7 +753,19 @@ function ResumePage({ resume, data, pageNumber }: { resume: ResumeDocument; data
   )
 }
 
-function PreviewCanvas({ resume, onOverflowChange, onSectionGapChange }: { resume: ResumeDocument; onOverflowChange: (labels: string[]) => void; onSectionGapChange: (gap: number) => void }) {
+function PreviewCanvas({
+  resume,
+  onOverflowChange,
+  onSectionGapChange,
+  onLayoutChange,
+  onPreviewFocus,
+}: {
+  resume: ResumeDocument
+  onOverflowChange: (labels: string[]) => void
+  onSectionGapChange: (gap: number) => void
+  onLayoutChange: (layout: ResumeLayout) => void
+  onPreviewFocus?: (focus: PreviewFocus) => void
+}) {
   const { pages, measureRef, ready } = usePagination(resume)
   const viewportRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(1)
@@ -704,6 +773,17 @@ function PreviewCanvas({ resume, onOverflowChange, onSectionGapChange }: { resum
   const overflowLabels = useMemo(() => pages.flatMap((page) => page.overflowLabels), [pages])
 
   useEffect(() => onOverflowChange(overflowLabels), [overflowLabels, onOverflowChange])
+  const handlePreviewClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!onPreviewFocus) return
+    if ((event.target as HTMLElement).closest('a')) return
+    const itemNode = (event.target as HTMLElement).closest<HTMLElement>('[data-preview-item]')
+    if (itemNode?.dataset.previewSection) {
+      onPreviewFocus({ sectionId: itemNode.dataset.previewSection, itemId: itemNode.dataset.previewItem, nonce: Date.now() })
+      return
+    }
+    const sectionNode = (event.target as HTMLElement).closest<HTMLElement>('[data-preview-section]')
+    if (sectionNode?.dataset.previewSection) onPreviewFocus({ sectionId: sectionNode.dataset.previewSection, nonce: Date.now() })
+  }
   useLayoutEffect(() => {
     const viewport = viewportRef.current
     if (!viewport) return
@@ -716,7 +796,7 @@ function PreviewCanvas({ resume, onOverflowChange, onSectionGapChange }: { resum
 
   return (
     <div data-resume-id={resume.id} data-pagination-ready={ready ? 'true' : 'false'} data-overflow={overflowLabels.length ? 'true' : 'false'}>
-      <MeasurementLayer resume={resume} measureRef={measureRef} gap={sectionGap} />
+      <MeasurementLayer resume={resume} measureRef={measureRef} />
       <div className="preview-viewport" ref={viewportRef}>
         <div className="preview-meta">
           <span>{pages.length} 页 · A4</span>
@@ -733,6 +813,41 @@ function PreviewCanvas({ resume, onOverflowChange, onSectionGapChange }: { resum
             />
             mm
           </label>
+          <label className="gap-control" title="调整板块内条目之间的距离，负值收紧">
+            条目间距
+            <input
+              type="number"
+              min={-3}
+              max={6}
+              step={0.25}
+              value={resume.layout.itemGap}
+              onChange={(event) => onLayoutChange({ ...resume.layout, itemGap: Math.max(-3, Math.min(6, Number(event.target.value) || 0)) })}
+            />
+            mm
+          </label>
+          <label className="gap-control" title="调整正文行间距">
+            行间距
+            <input
+              type="number"
+              min={1.1}
+              max={1.9}
+              step={0.05}
+              value={resume.layout.lineHeight}
+              onChange={(event) => onLayoutChange({ ...resume.layout, lineHeight: Math.max(1.1, Math.min(1.9, Number(event.target.value) || 1.35)) })}
+            />
+          </label>
+          <label className="gap-control" title="调整正文字号">
+            字号
+            <input
+              type="number"
+              min={9}
+              max={12.5}
+              step={0.25}
+              value={resume.layout.fontSize}
+              onChange={(event) => onLayoutChange({ ...resume.layout, fontSize: Math.max(9, Math.min(12.5, Number(event.target.value) || 10.75)) })}
+            />
+            pt
+          </label>
         </div>
         <div
           className="preview-scale-stage"
@@ -741,7 +856,7 @@ function PreviewCanvas({ resume, onOverflowChange, onSectionGapChange }: { resum
             height: `${(pages.length * 1122.52 + Math.max(0, pages.length - 1) * 20) * scale}px`,
           } as CSSProperties}
         >
-          <div className="preview-pages" style={{ '--section-gap': `${sectionGap}mm` } as CSSProperties}>
+          <div className="preview-pages" onClick={handlePreviewClick} style={{ '--section-gap': `${sectionGap}mm` } as CSSProperties}>
             {pages.map((page, index) => <ResumePage key={index} resume={resume} data={page} pageNumber={index + 1} />)}
           </div>
         </div>
@@ -758,6 +873,7 @@ function App() {
   const [saveState, setSaveState] = useState<SaveState>('saved')
   const [busyAction, setBusyAction] = useState('')
   const [overflowLabels, setOverflowLabels] = useState<string[]>([])
+  const [previewFocus, setPreviewFocus] = useState<PreviewFocus | null>(null)
   const [toasts, setToasts] = useState<Toast[]>([])
   const [renameTarget, setRenameTarget] = useState<ResumeDocument | null>(null)
   const [renameValue, setRenameValue] = useState('')
@@ -1004,6 +1120,7 @@ function App() {
           education: { graduation: '', major: '', school: '' },
           sections: [],
           sectionGap: 0,
+          layout: { itemGap: 0, lineHeight: 1.35, fontSize: 10.75 },
           snapshots: [],
         }
     setBusyAction(source ? `copy-${source.id}` : 'create')
@@ -1329,6 +1446,7 @@ function App() {
                             <SortableCard key={section.id} id={section.id} className="section-sortable">
                               <SectionEditor
                                 section={section}
+                                focus={previewFocus}
                                 onChange={updateSection}
                                 onDuplicate={() => duplicateSection(section)}
                                 onDelete={() => updateCurrent((resume) => ({ ...resume, sections: resume.sections.filter((entry) => entry.id !== section.id) }))}
@@ -1366,7 +1484,13 @@ function App() {
                   <div><span>A4 实时预览</span><small>210 × 297 mm</small></div>
                   {overflowLabels.length > 0 && <span className="preview-warning"><AlertCircle size={14} /> 请修正溢出条目</span>}
                 </div>
-                <PreviewCanvas resume={current} onOverflowChange={setOverflowLabels} onSectionGapChange={(gap) => updateCurrent((doc) => ({ ...doc, sectionGap: gap }))} />
+                <PreviewCanvas
+                  resume={current}
+                  onOverflowChange={setOverflowLabels}
+                  onSectionGapChange={(gap) => updateCurrent((doc) => ({ ...doc, sectionGap: gap }))}
+                  onLayoutChange={(layout) => updateCurrent((doc) => ({ ...doc, layout }))}
+                  onPreviewFocus={setPreviewFocus}
+                />
               </section>
             </>
           ) : (
