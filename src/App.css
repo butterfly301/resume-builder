@@ -1197,7 +1197,8 @@ input::placeholder {
   position: relative;
   display: grid;
   grid-template-columns: 3.4mm minmax(0, 1fr);
-  padding: 0.4mm 0;
+  margin-bottom: var(--resume-bullet-gap, 0mm);
+  padding: 0;
   line-height: var(--resume-line-height, 1.35);
 }
 
@@ -1278,7 +1279,7 @@ input::placeholder {
 }
 
 .experience-preview li {
-  padding: 0.55mm 0;
+  padding: 0;
 }
 
 .measurement-shell {
@@ -1676,7 +1677,7 @@ input::placeholder {
 .resume-header {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 27mm;
+  grid-template-columns: minmax(0, 1fr) var(--resume-photo-width, 27mm);
   grid-template-areas:
     "identity photo"
     "contact photo";
@@ -1697,7 +1698,7 @@ input::placeholder {
 }
 
 .resume-name-line h1 {
-  color: #173c30;
+  color: color-mix(in srgb, var(--resume-accent, #1e4a3a) 85%, black);
   font-family: "得意黑", "Microsoft YaHei", sans-serif;
   font-size: 26pt;
   font-weight: 800;
@@ -1733,7 +1734,7 @@ input::placeholder {
 .resume-contact svg {
   width: 3.25mm;
   height: 3.25mm;
-  color: #477565;
+  color: color-mix(in srgb, var(--resume-accent, #1e4a3a) 78%, white);
   stroke-width: 1.65;
 }
 
@@ -1761,12 +1762,12 @@ input::placeholder {
 
 .resume-photo {
   grid-area: photo;
-  width: 27mm;
-  height: 35mm;
+  width: var(--resume-photo-width, 24mm);
+  height: var(--resume-photo-height, 31mm);
   border: 0;
   border-radius: 2.2mm;
   background: #edf0ed;
-  box-shadow: 0 0 0 0.35mm #fffdf9, 0 0 0 0.55mm #cad4ce;
+  box-shadow: 0 0 0 0.35mm #fffdf9, 0 0 0 0.55mm color-mix(in srgb, var(--resume-accent, #1e4a3a) 24%, white);
   object-fit: cover;
   object-position: center top;
 }
@@ -1777,14 +1778,14 @@ input::placeholder {
   grid-template-columns: max-content 1fr;
   align-items: center;
   gap: 4mm;
-  padding: calc(4mm + var(--section-gap, 0mm)) 0 2.1mm;
+  padding: calc(3mm + var(--section-gap, 0mm)) 0 2.1mm;
 }
 
 .resume-section-title h2 {
   height: auto;
   justify-content: flex-start;
   background: transparent;
-  color: #1e4a3a;
+  color: var(--resume-accent, #1e4a3a);
   font-family: "得意黑", "Microsoft YaHei", sans-serif;
   font-size: var(--resume-section-font-size, 15pt);
   font-weight: 800;
@@ -1794,7 +1795,7 @@ input::placeholder {
 
 .resume-section-title > span {
   height: 0.25mm;
-  background: #c7d4ce;
+  background: color-mix(in srgb, var(--resume-accent, #1e4a3a) 24%, white);
 }
 
 .resume-section-skills .resume-section-title {
@@ -2094,9 +2095,10 @@ input::placeholder {
   animation: editor-focus-flash 2s ease-out;
 }
 
-/* 条目间距同时作用于经历条目内的 bullet 之间，点间距在其基础上额外叠加 */
+/* 点间距统一旋钮：技能点与经历条目内的 bullet 都只由 bullet-gap 控制，
+   item-gap 只负责条目之间的距离 */
 .experience-preview li {
-  margin-bottom: calc(var(--resume-item-gap, 0mm) + var(--resume-bullet-gap, 0mm));
+  margin-bottom: var(--resume-bullet-gap, 0mm);
 }
 
 .experience-preview li:last-child {

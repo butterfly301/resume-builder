@@ -48,6 +48,9 @@ export const resumeLayoutSchema = z.object({
   marginBottom: z.number().min(0).max(30).default(14),
   marginLeft: z.number().min(0).max(30).default(14),
   marginRight: z.number().min(0).max(30).default(14),
+  photoWidth: z.number().min(15).max(40).default(24),
+  photoHeight: z.number().min(20).max(50).default(31),
+  accent: z.string().regex(/^#[0-9a-fA-F]{6}$/, { message: '主题色需为 #RRGGBB 格式' }).default('#1e4a3a'),
 })
 
 export type ResumeLayout = z.infer<typeof resumeLayoutSchema>
@@ -65,6 +68,9 @@ export const resumeLayoutDefaults: ResumeLayout = {
   marginBottom: 14,
   marginLeft: 14,
   marginRight: 14,
+  photoWidth: 24,
+  photoHeight: 31,
+  accent: '#1e4a3a',
 }
 
 export const resumeBaseSchema = z.object({

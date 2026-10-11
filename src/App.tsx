@@ -654,6 +654,9 @@ function resumeLayoutStyle(resume: ResumeDocument): CSSProperties {
     '--resume-margin-bottom': `${layout.marginBottom}mm`,
     '--resume-margin-left': `${layout.marginLeft}mm`,
     '--resume-margin-right': `${layout.marginRight}mm`,
+    '--resume-photo-width': `${layout.photoWidth}mm`,
+    '--resume-photo-height': `${layout.photoHeight}mm`,
+    '--resume-accent': layout.accent,
   } as CSSProperties
 }
 
@@ -966,6 +969,38 @@ function LayoutFields({
             onChange={(marginRight) => onLayoutChange({ ...resume.layout, marginRight })}
           />
           mm
+        </label>
+        <label className="gap-control" title="照片宽度，同时决定头部栅格列宽">
+          照片宽
+          <NumberField
+            label="照片宽"
+            value={resume.layout.photoWidth}
+            min={15}
+            max={40}
+            step={0.5}
+            onChange={(photoWidth) => onLayoutChange({ ...resume.layout, photoWidth })}
+          />
+          mm
+        </label>
+        <label className="gap-control" title="照片高度">
+          照片高
+          <NumberField
+            label="照片高"
+            value={resume.layout.photoHeight}
+            min={20}
+            max={50}
+            step={0.5}
+            onChange={(photoHeight) => onLayoutChange({ ...resume.layout, photoHeight })}
+          />
+          mm
+        </label>
+        <label className="gap-control" title="姓名、板块标题、图标与分隔线的主题色">
+          主题色
+          <input
+            type="color"
+            value={resume.layout.accent}
+            onChange={(event) => onLayoutChange({ ...resume.layout, accent: event.target.value })}
+          />
         </label>
       </div>
     </section>
@@ -1297,6 +1332,9 @@ function App() {
             marginBottom: 14,
             marginLeft: 14,
             marginRight: 14,
+            photoWidth: 24,
+            photoHeight: 31,
+            accent: '#1e4a3a',
           },
           snapshots: [],
         }
