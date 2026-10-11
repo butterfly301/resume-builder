@@ -24,7 +24,7 @@ if not exist "dist\index.html" (
 )
 
 if not defined AUTO_OPEN set "AUTO_OPEN=1"
-echo Starting Resume Editor at http://127.0.0.1:4178
+echo Starting Resume Builder at http://127.0.0.1:4178 (Edge)
 echo Keep this window open while using the application.
 echo.
 node "dist-server\server\index.js"

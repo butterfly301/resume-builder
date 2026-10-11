@@ -256,7 +256,7 @@ const server = app.listen(port, host, () => {
   const url = `http://${host}:${port}`
   process.stdout.write(`${JSON.stringify({ level: 'info', event: 'server_started', url })}\n`)
   if (process.env.AUTO_OPEN === '1') {
-    const child = spawn('cmd.exe', ['/c', 'start', '', url], { detached: true, stdio: 'ignore' })
+    const child = spawn('cmd.exe', ['/c', 'start', 'msedge', url], { detached: true, stdio: 'ignore' })
     child.unref()
   }
 })

@@ -1993,8 +1993,10 @@ input::placeholder {
 
   .resume-page {
     width: 210mm;
+    height: 297mm;
     min-height: 297mm;
     margin: 0;
+    overflow: hidden;
     box-shadow: none;
     page-break-after: always;
     break-after: page;
