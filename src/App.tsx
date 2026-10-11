@@ -696,26 +696,12 @@ function ResumePage({ resume, data, pageNumber }: { resume: ResumeDocument; data
   )
 }
 
-function PreviewCanvas({ resume, onOverflowChange }: { resume: ResumeDocument; onOverflowChange: (labels: string[]) => void }) {
+function PreviewCanvas({ resume, onOverflowChange, onSectionGapChange }: { resume: ResumeDocument; onOverflowChange: (labels: string[]) => void; onSectionGapChange: (gap: number) => void }) {
   const { pages, measureRef, ready } = usePagination(resume)
   const viewportRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(1)
-  const [sectionGap, setSectionGap] = useState(() => {
-    try {
-      return Number(window.localStorage.getItem('resume-editor-section-gap')) || 0
-    } catch {
-      return 0
-    }
-  })
+  const sectionGap = resume.sectionGap ?? 0
   const overflowLabels = useMemo(() => pages.flatMap((page) => page.overflowLabels), [pages])
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem('resume-editor-section-gap', String(sectionGap))
-    } catch {
-      // 忽略存储失败（如隐私模式）。
-    }
-  }, [sectionGap])
 
   useEffect(() => onOverflowChange(overflowLabels), [overflowLabels, onOverflowChange])
   useLayoutEffect(() => {
@@ -743,7 +729,7 @@ function PreviewCanvas({ resume, onOverflowChange }: { resume: ResumeDocument; o
               max={12}
               step={0.5}
               value={sectionGap}
-              onChange={(event) => setSectionGap(Math.max(-3, Math.min(12, Number(event.target.value) || 0)))}
+              onChange={(event) => onSectionGapChange(Math.max(-3, Math.min(12, Number(event.target.value) || 0)))}
             />
             mm
           </label>
@@ -834,7 +820,29 @@ function App() {
         ? parsed.data.find((resume) => resume.id === lastId)
         : undefined
       const initial = requested ?? remembered ?? parsed.data[0]
-      if (initial) selectLocalResume(initial)
+      if (initial) {
+        // 一次性迁移：把旧的 localStorage 全局间距值写进当前简历配置。
+        let storedGap: number | null = null
+        try {
+          const raw = window.localStorage.getItem('resume-editor-section-gap')
+          if (raw !== null) storedGap = Number(raw)
+        } catch {
+          storedGap = null
+        }
+        if (storedGap !== null && !Number.isNaN(storedGap) && initial.sectionGap !== storedGap) {
+          initial.sectionGap = Math.max(-3, Math.min(12, storedGap))
+          selectLocalResume(initial)
+          // 标记未保存，交给自动保存效果写入磁盘。
+          setSaveState('unsaved')
+          try {
+            window.localStorage.removeItem('resume-editor-section-gap')
+          } catch {
+            // 忽略清理失败。
+          }
+        } else {
+          selectLocalResume(initial)
+        }
+      }
       else {
         setCurrent(null)
         currentRef.current = null
@@ -995,6 +1003,7 @@ function App() {
           person: { name: '', role: '', phone: '', email: '', wechat: '', website: '', birth: '', city: '', photo: '/assets/profile-photo.png' },
           education: { graduation: '', major: '', school: '' },
           sections: [],
+          sectionGap: 0,
           snapshots: [],
         }
     setBusyAction(source ? `copy-${source.id}` : 'create')
@@ -1357,7 +1366,7 @@ function App() {
                   <div><span>A4 实时预览</span><small>210 × 297 mm</small></div>
                   {overflowLabels.length > 0 && <span className="preview-warning"><AlertCircle size={14} /> 请修正溢出条目</span>}
                 </div>
-                <PreviewCanvas resume={current} onOverflowChange={setOverflowLabels} />
+                <PreviewCanvas resume={current} onOverflowChange={setOverflowLabels} onSectionGapChange={(gap) => updateCurrent((doc) => ({ ...doc, sectionGap: gap }))} />
               </section>
             </>
           ) : (

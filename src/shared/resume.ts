@@ -56,6 +56,7 @@ export const resumeBaseSchema = z.object({
     school: textSchema,
   }),
   sections: z.array(sectionSchema).max(30),
+  sectionGap: z.number().min(-3).max(12).default(0),
 })
 
 export const snapshotSchema = z.object({
