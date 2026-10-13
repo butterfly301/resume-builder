@@ -771,7 +771,7 @@ function usePagination(resume: ResumeDocument) {
   return { pages, measureRef, ready }
 }
 
-function ResumePage({ resume, data, pageNumber }: { resume: ResumeDocument; data: ResumePageData; pageNumber: number }) {
+function ResumePage({ resume, data, pageNumber, totalPages }: { resume: ResumeDocument; data: ResumePageData; pageNumber: number; totalPages: number }) {
   return (
     <article
       className={`resume-page${data.overflowLabels.length ? ' has-overflow resume-overflow' : ''}`}
@@ -799,7 +799,7 @@ function ResumePage({ resume, data, pageNumber }: { resume: ResumeDocument; data
           )
         })}
       </div>
-      <span className="page-number">{pageNumber}</span>
+      {totalPages > 1 && <span className="page-number">{pageNumber}</span>}
     </article>
   )
 }
@@ -1052,7 +1052,7 @@ function PreviewCanvas({
           } as CSSProperties}
         >
           <div className="preview-pages" onClick={handlePreviewClick} style={{ '--section-gap': `${sectionGap}mm` } as CSSProperties}>
-            {pages.map((page, index) => <ResumePage key={index} resume={resume} data={page} pageNumber={index + 1} />)}
+            {pages.map((page, index) => <ResumePage key={index} resume={resume} data={page} pageNumber={index + 1} totalPages={pages.length} />)}
           </div>
         </div>
       </div>
