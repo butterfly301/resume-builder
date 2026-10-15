@@ -306,6 +306,8 @@ button:disabled {
 }
 
 .resume-sidebar {
+  display: flex;
+  flex-direction: column;
   height: calc(100vh - 56px);
   border-right: 1px solid var(--border-strong);
   background: #f7f8f7;
@@ -346,8 +348,60 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
+.sidebar-search {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 7px;
+  margin: 8px 8px 0;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--faint);
+  transition: border-color 130ms ease-out;
+}
+
+.sidebar-search:focus-within {
+  border-color: var(--focus);
+  color: var(--muted);
+}
+
+.sidebar-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.sidebar-search input::placeholder {
+  color: var(--faint);
+}
+
+.sidebar-search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.sidebar-search-clear {
+  display: flex;
+  padding: 2px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.sidebar-search-clear:hover {
+  color: var(--ink);
+}
+
 .resume-list {
-  height: calc(100% - 52px);
+  flex: 1;
+  min-height: 0;
   padding: 8px;
   overflow-y: auto;
 }
@@ -1099,14 +1153,15 @@ input::placeholder {
 }
 
 .resume-education {
-  gap: 1.6mm;
+  gap: 1.3mm;
   margin-top: 3mm;
-  font-size: 10.5pt;
+  font-size: 10.25pt;
 }
 
 .resume-edu-meta {
+  flex: none;
   gap: 1.6mm;
-  margin-left: 2.5mm;
+  margin-left: 2mm;
 }
 
 .resume-education svg,
@@ -1709,15 +1764,16 @@ input::placeholder {
 }
 
 .resume-education {
-  gap: 1.8mm;
+  gap: 1.5mm;
   margin-top: 4mm;
   color: #38463f;
-  font-size: 10.25pt;
+  font-size: 10pt;
 }
 
 .resume-edu-meta {
+  flex: none;
   gap: 1.8mm;
-  margin-left: 3mm;
+  margin-left: 2mm;
   color: #65716b;
 }
 

@@ -53,6 +53,7 @@ import {
   Redo2,
   RotateCcw,
   Save,
+  Search,
   SlidersHorizontal,
   Trash2,
   Undo2,
@@ -570,7 +571,7 @@ function ResumeHeader({ resume }: { resume: ResumeDocument }) {
         </div>
         <div className="resume-education">
           <GraduationCap aria-hidden="true" />
-          <span>{[education.graduation, education.major, education.school].filter(Boolean).join(' · ')}</span>
+          <span>{[education.school, education.major, education.graduation].filter(Boolean).join(' · ')}</span>
           {person.city && <span className="resume-edu-meta"><MapPin aria-hidden="true" />{person.city}</span>}
           {person.birth && <span className="resume-edu-meta"><CalendarDays aria-hidden="true" />{person.birth}</span>}
         </div>
@@ -1077,6 +1078,7 @@ function App() {
   const [snapshotName, setSnapshotName] = useState('')
   const [snapshotDialogOpen, setSnapshotDialogOpen] = useState(false)
   const [historyState, setHistoryState] = useState({ canUndo: false, canRedo: false })
+  const [resumeSearch, setResumeSearch] = useState('')
   const currentRef = useRef<ResumeDocument | null>(null)
   const pastRef = useRef<ResumeDocument[]>([])
   const futureRef = useRef<ResumeDocument[]>([])
@@ -1084,6 +1086,15 @@ function App() {
   const serverSnapRef = useRef<Map<string, string>>(new Map())
   const saveStateRef = useRef(saveState)
   const sectionSensors = useDragSensors()
+
+  const visibleResumes = useMemo(() => {
+    const query = resumeSearch.trim().toLowerCase()
+    if (!query) return resumes
+    return resumes.filter((resume) =>
+      [resume.title, resume.person.name, resume.person.role, resume.education.school, resume.education.major]
+        .some((field) => field.toLowerCase().includes(query)),
+    )
+  }, [resumes, resumeSearch])
 
   const notify = useCallback((message: string, tone: Toast['tone'] = 'neutral') => {
     const toast = { id: createId('toast'), message, tone }
@@ -1580,27 +1591,48 @@ function App() {
         <main className="workspace">
           <aside className="resume-sidebar" aria-label="简历列表">
             <div className="sidebar-heading">
-              <div><span>简历</span><small>{resumes.length} 份</small></div>
+              <div><span>简历</span><small>{resumeSearch.trim() ? `匹配 ${visibleResumes.length} / ${resumes.length} 份` : `${resumes.length} 份`}</small></div>
               <IconButton label="新建简历" onClick={() => void createResume()} disabled={busyAction === 'create'}>
                 {busyAction === 'create' ? <LoaderCircle className="spin" size={16} /> : <FilePlus2 size={16} />}
               </IconButton>
             </div>
-            {resumes.length ? (
-              <div className="resume-list">
-                {resumes.map((resume, index) => (
-                  <div className={`resume-list-item${current?.id === resume.id ? ' selected' : ''}`} key={resume.id} style={{ '--item-index': index } as CSSProperties}>
-                    <button className="resume-select" type="button" onClick={() => void chooseResume(resume)} aria-current={current?.id === resume.id ? 'page' : undefined}>
-                      <span>{resume.title}</span>
-                      <small>{resume.person.name || '未填写姓名'} · {formatTime(resume.updatedAt)}</small>
-                    </button>
-                    <div className="resume-item-actions">
-                      <IconButton label={`重命名 ${resume.title}`} onClick={() => { setRenameTarget(resume); setRenameValue(resume.title) }}><Pencil size={13} /></IconButton>
-                      <IconButton label={`复制 ${resume.title}`} onClick={() => void createResume(resume)} disabled={busyAction === `copy-${resume.id}`}><Copy size={13} /></IconButton>
-                      <IconButton label={`删除 ${resume.title}`} className="danger-quiet" onClick={() => setDeleteTarget(resume)}><Trash2 size={13} /></IconButton>
-                    </div>
-                  </div>
-                ))}
+            {resumes.length > 3 && (
+              <div className="sidebar-search">
+                <Search size={14} />
+                <input
+                  type="search"
+                  value={resumeSearch}
+                  onChange={(event) => setResumeSearch(event.target.value)}
+                  placeholder="搜索标题、姓名、岗位"
+                  aria-label="搜索简历"
+                />
+                {resumeSearch && (
+                  <button type="button" className="sidebar-search-clear" aria-label="清除搜索" onClick={() => setResumeSearch('')}>
+                    <X size={13} />
+                  </button>
+                )}
               </div>
+            )}
+            {resumes.length ? (
+              resumeSearch.trim() && !visibleResumes.length ? (
+                <div className="sidebar-empty"><FileText size={22} /><p>没有匹配的简历</p><button type="button" className="button secondary" onClick={() => setResumeSearch('')}>清除搜索</button></div>
+              ) : (
+                <div className="resume-list">
+                  {visibleResumes.map((resume, index) => (
+                    <div className={`resume-list-item${current?.id === resume.id ? ' selected' : ''}`} key={resume.id} style={{ '--item-index': index } as CSSProperties}>
+                      <button className="resume-select" type="button" onClick={() => void chooseResume(resume)} aria-current={current?.id === resume.id ? 'page' : undefined}>
+                        <span>{resume.title}</span>
+                        <small>{resume.person.name || '未填写姓名'} · {formatTime(resume.updatedAt)}</small>
+                      </button>
+                      <div className="resume-item-actions">
+                        <IconButton label={`重命名 ${resume.title}`} onClick={() => { setRenameTarget(resume); setRenameValue(resume.title) }}><Pencil size={13} /></IconButton>
+                        <IconButton label={`复制 ${resume.title}`} onClick={() => void createResume(resume)} disabled={busyAction === `copy-${resume.id}`}><Copy size={13} /></IconButton>
+                        <IconButton label={`删除 ${resume.title}`} className="danger-quiet" onClick={() => setDeleteTarget(resume)}><Trash2 size={13} /></IconButton>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
             ) : (
               <div className="sidebar-empty"><FileText size={22} /><p>还没有简历</p><button type="button" className="button secondary" onClick={() => void createResume()}>新建第一份</button></div>
             )}
